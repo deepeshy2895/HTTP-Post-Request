@@ -1,6 +1,5 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 void main() {
   runApp(MyApp());
@@ -12,77 +11,63 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: PostPage(),
-      debugShowCheckedModeBanner: false,
+      home: RequestClass(),
     );
   }
 }
 
-class PostPage extends StatefulWidget {
-  const PostPage({super.key});
+class RequestClass extends StatefulWidget {
+  const RequestClass({super.key});
 
   @override
-  State<PostPage> createState() => _PostPageState();
+  State<RequestClass> createState() => _RequestClassState();
 }
 
-class _PostPageState extends State<PostPage> {
+class _RequestClassState extends State<RequestClass> {
+  final Dio dio = Dio();
+  final url = 'https://api.escuelajs.co/api/v1/products/';
   String message = '';
 
-  Future<void> createProduct() async {
-    final url = Uri.parse('https://api.escuelajs.co/api/v1/products/');
-
-    final Map<String, dynamic> productData = {
-      "title": "My New Product",
-      "price": 500,
-      "description": "This is a test product",
-      "categoryId": 1,
-      "images": ["https://placehold.co/600x400"]
+  Future<void> postData() async {
+    final Map<String, dynamic> productsData = {
+      'title': 'Dipesh Product',
+      'price': 700,
+      'description': 'Dipesh New Product',
+      'categoryId': 1,
+      'images': ['https://placehold.co/600x400'],
     };
 
     try {
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(productData),
-      );
-
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          message = "Product Created! ID:${data['id']}";
-        });
-      } else {
-        setState(() {
-          message = 'Failed to create product. Status:${response.statusCode}';
-        });
-      }
-    } catch (e) {
+      final response = await dio.post(url, data: productsData);
       setState(() {
-        message = "Error:$e";
+        message = 'Product created Successfully ID: ${response.data['id']}';
       });
+    } on DioException catch (e) {
+      message = 'Error: $e';
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("HTTP Post"),
+      appBar: AppBar(
+        title: Text('Dio POST Example'),
+      ),
+      body: Center(
+        child: Column(
+          children: [
+            ElevatedButton(
+                onPressed: () {
+                  postData();
+                },
+                child: Text('Create Product')),
+                SizedBox(
+                    height: 30,
+                ),
+                Text(message),
+          ],
         ),
-        body: Center(
-          child: Column(
-            children: [
-              ElevatedButton(
-                  onPressed: () {
-                    createProduct();
-                  },
-                  child: Text('Create Product')),
-              SizedBox(
-                height: 22,
-              ),
-              Text(message),
-            ],
-          ),
-        ));
+      ),
+    );
   }
 }
